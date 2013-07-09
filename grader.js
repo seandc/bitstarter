@@ -43,11 +43,12 @@ var loadChecks = function(checksfile) {
 
 var getHtmlFromUrl = function(url){
   rest.get(url).on('complete', function(result){
-    return result;
+    printResult(result);
+    return;
   });
 }
 
-var checkHtmlFile = function(html, checksfile) {
+var checkHtml = function(html, checksfile) {
     $ = cheerio.load(html);
     var checks = loadChecks(checksfile).sort();
     var out = {};
@@ -57,6 +58,12 @@ var checkHtmlFile = function(html, checksfile) {
     }
     return out;
 };
+
+var printResult = function(html){
+  var checkJson = checkHtml(html, program.checks);
+  var outJson = JSON.stringify(checkJson, null, 4);
+  console.log(outJson);
+}
 
 var clone = function(fn) {
     // Workaround for commander.js issue.
@@ -70,10 +77,13 @@ if(require.main == module) {
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
         .option('-u, --url <address>', 'Url of html file')
         .parse(process.argv);
-    var html =  program.url ? getHtmlFromUrl(program.url) : fs.readFileSync(program.file)
-    var checkJson = checkHtmlFile(html, program.checks);
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
+    if(program.url)
+    {
+      getHtmlFromUrl(program.url);
+    }
+    else {
+      printResult(fs.readFileSync(program.file));
+    }
 } else {
     exports.checkHtmlFile = checkHtmlFile;
 }
